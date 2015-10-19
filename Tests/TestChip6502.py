@@ -209,3 +209,43 @@ class TestChip6502(unittest.TestCase):
         self.__memory.set_address(0xFF11, 0x37)
         target_func(0x0C)
         self.assertEqual(0x37, get_register_func())
+
+    def test_lda_indirect_indexed(self):
+        mappings = {
+        self.__target.lda_indirect_indexed: lambda: self.__target.accumulator,
+        self.__target.ldx_indirect_indexed: lambda: self.__target.x_register,
+        self.__target.ldy_indirect_indexed: lambda: self.__target.y_register
+
+        }
+
+        for k, v in mappings.items():
+            self.__assert_load_register_indirect_indexed(k, v)
+
+    def __assert_load_register_indirect_indexed(self, target_func, get_register_func):
+        """
+        Indirect indexed addressing is done by taking the address given and the one after it and using the values to
+        make a new 16-bit address. Add the value of the Y-register to that address and load the value that is at the
+        final address.
+
+        e.g. LDA(0x02),Y where:
+
+           * 0x02 contains 0x01
+           * 0x03 contains 0x12
+           * The Y-register contains 0x02
+
+        Then combine 0x02 and 0x03 to make a little-endian address:
+
+        0x01 + 0x12 = 0x1201
+
+        Then add the contents of the Y-register:
+
+        0x1201 + 0x02 = 0x1203
+
+        Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
+        """
+        self.__target.y_register = 0x02
+        self.__memory.set_address(0x02, 0x01)
+        self.__memory.set_address(0x03, 0x12)
+        self.__memory.set_address(0x1203, 0xFE)
+        target_func(0x02)
+        self.assertEqual(0xFE, get_register_func())
