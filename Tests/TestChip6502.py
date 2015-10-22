@@ -11,6 +11,24 @@ class TestChip6502(unittest.TestCase):
         self.__target = chip.Chip6502(self.__memory)
         self.__registers = ['accumulator', 'x_register', 'y_register']
 
+    def __get_accumulator(self):
+        return self.__target.accumulator
+
+    def __set_accumulator(self, val):
+        self.__target.accumulator = val
+
+    def __get_x_register(self):
+        return self.__target.x_register
+
+    def __set_x_register(self, val):
+        self.__target.x_register = val
+
+    def __get_y_register(self):
+        return self.__target.y_register
+
+    def __set_y_register(self, val):
+        self.__target.y_register = val
+
     def test_instantiation_zeroes_internal_state(self):
         """
         When the chip is first powered on it should set a bunch of internal state to zero.
@@ -81,7 +99,8 @@ class TestChip6502(unittest.TestCase):
         for r in self.__registers:
             setattr(self.__target, flag_name, flag_start)
             setattr(self.__target, r, register_value)
-            self.assertEqual(flag_end, getattr(self.__target, flag_name),
+            self.assertEqual(flag_end,
+                             getattr(self.__target, flag_name),
                              "Expected {flag_name} to be {value} when {register} was set to {regval}. It wasn't".
                              format(flag_name=flag_name, value=flag_end, register=r, regval=register_value))
 
@@ -95,24 +114,67 @@ class TestChip6502(unittest.TestCase):
 
             self.assertRaises(chip.RegisterOverflowException, overflow_register)
 
-    def test_load_immediate_register(self):
+    def test_load_immediate_registers(self):
         """
         Test that loading a register using immediate addressing loads the value provided into the register
 
         E.g. LDA 0x01 causes 0x01 to be loaded into the accumulator
         """
-        mappings = {self.__target.lda_immediate: lambda: self.__target.accumulator,
-                    self.__target.ldx_immediate: lambda: self.__target.x_register,
-                    self.__target.ldy_immediate: lambda: self.__target.y_register}
-        value = 0x01
-
-        for f, get_func in mappings.items():
-            f(value)
-            result = get_func()
+        def assert_load_immediate_register(target_func, get_register_func):
+            value = 0x01
+            target_func(value)
+            result = get_register_func()
             self.assertEqual(value,
                              result,
                              "Failed while executing {func}. Expected {expected}. Got {result}."
-                             .format(func=f, expected=hex(value), result=hex(result)))
+                             .format(func=target_func, expected=hex(value), result=hex(result)))
+
+        mappings = {
+            self.__target.lda_immediate: self.__get_accumulator,
+            self.__target.ldx_immediate: self.__get_x_register,
+            self.__target.ldy_immediate: self.__get_y_register
+        }
+
+        for f, get_func in mappings.items():
+            assert_load_immediate_register(f, get_func)
+
+
+    def test_store_immediate_or_absolute_registers(self):
+        """
+        Test that storing a register using immediate or absolute addressing stores register into the memory address
+        provided
+
+        E.g. STA 0x01 causes the accumulator to be stored to memory location 0x01
+
+        Seems a bit silly having two addressing methods doing the same thing -- either I misunderstand how this operates
+        or one of these isn't actually valid. My guess: immediate is inappropriate for use with register storage.
+        """
+        def assert_store_immediate_register(target_func, set_register_func):
+            register_value=0xFF
+            target_address = 0x12
+            set_register_func(register_value)
+            target_func(target_address)
+            result = self.__memory.get_address(target_address)
+            self.assertEqual(register_value,
+                             result,
+                             "Expected {target_address} to be {register_value} when calling {func}. It was {result}."
+                             .format(target_address=hex(target_address),
+                                     register_value=hex(register_value),
+                                     func=target_func,
+                                     result=hex(result))
+            )
+
+        target_funcs = {
+            self.__target.sta_immediate: self.__set_accumulator,
+            self.__target.stx_immediate: self.__set_x_register,
+            self.__target.sty_immediate: self.__set_y_register,
+            self.__target.sta_absolute: self.__set_accumulator,
+            self.__target.stx_absolute: self.__set_x_register,
+            self.__target.sty_absolute: self.__set_y_register
+        }
+
+        for target_func, set_register_func in target_funcs.items():
+            assert_store_immediate_register(target_func, set_register_func)
 
     def test_load_absolute_register(self):
         """
@@ -121,20 +183,25 @@ class TestChip6502(unittest.TestCase):
 
         E.g. LDA $0x01, when 0x0D is stored at 0x01 causes 0x01 to be loaded into the accumulator
         """
-        expected_value = 0x0D
-        memory_address = 0x01
-        self.__memory.set_address(memory_address, expected_value)
+        def assert_load_absolute_register(target_func, get_register_func):
+            expected_value = 0x0D
+            memory_address = 0x01
+            self.__memory.set_address(memory_address, expected_value)
 
-        test_mappings = {self.__target.lda_absolute: lambda: self.__target.accumulator,
-                         self.__target.ldx_absolute: lambda: self.__target.x_register,
-                         self.__target.ldy_absolute: lambda: self.__target.y_register}
-
-        for target_func, get_register_func in test_mappings.items():
             target_func(memory_address)
             self.assertEqual(expected_value,
                              get_register_func(),
                              "Failed while executing {func}. Expected {expected}. Got {result}"
                              .format(func=target_func, expected=expected_value, result=get_register_func()))
+
+        test_mappings = {
+            self.__target.lda_absolute: self.__get_accumulator,
+            self.__target.ldx_absolute: self.__get_x_register,
+            self.__target.ldy_absolute: self.__get_y_register
+        }
+
+        for target_func, get_register_func in test_mappings.items():
+            assert_load_absolute_register(target_func, get_register_func)
 
     def test_load_absolute_indexed_register(self):
         """
@@ -147,26 +214,26 @@ class TestChip6502(unittest.TestCase):
         address_offset = 0x0003
         memory_data = 0x0D
 
-        def set_x_register(val):
-            self.__target.x_register = val
+        set_register_mappings = {'X': self.__set_x_register,
+                                 'Y': self.__set_y_register}
 
-        def set_y_register(val):
-            self.__target.y_register = val
+        test_mappings = {
+            self.__target.lda_absolute_indexed: self.__get_accumulator,
+            self.__target.ldx_absolute_indexed: self.__get_x_register,
+            self.__target.ldy_absolute_indexed: self.__get_y_register
+        }
 
-        set_register_mappings = {'X': set_x_register,
-                                 'Y': set_y_register}
-
-        test_mappings = {self.__target.ldx_absolute_indexed : lambda: self.__target.x_register,
-                         self.__target.lda_absolute_indexed: lambda: self.__target.accumulator,
-                         self.__target.ldy_absolute_indexed: lambda: self.__target.y_register}
+        self.__memory.set_address(base_address + address_offset, memory_data)
+        fail_msg = "Failed while executing {func} for {register_letter}. Expected {memory_data}. Got {result}."
 
         for target_func, get_register_func in test_mappings.items():
+
             for register_letter, set_register_func in set_register_mappings.items():
+
                 set_register_func(address_offset)
-                self.__memory.set_address(base_address + address_offset, memory_data)
                 target_func(base_address, register_letter)
                 result = get_register_func()
-                fail_msg = "Failed while executing {func} for {register_letter}. Expected {memory_data}. Got {result}."
+
                 self.assertEqual(memory_data,
                                  get_register_func(),
                                  (fail_msg.format(func=target_func,
@@ -175,16 +242,6 @@ class TestChip6502(unittest.TestCase):
                                                   result=hex(result))))
 
     def test_load_register_indexed_indirect(self):
-        mappings = {
-        lambda: self.__target.accumulator: self.__target.lda_indexed_indirect,
-        lambda: self.__target.x_register: self.__target.ldx_indexed_indirect,
-        lambda: self.__target.y_register: self.__target.ldy_indexed_indirect
-        }
-
-        for k,v in mappings.items():
-            self.__assert_load_register_indexed_indirect(k, v)
-
-    def __assert_load_register_indexed_indirect(self, get_register_func, target_func):
         """
         Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
 
@@ -203,25 +260,24 @@ class TestChip6502(unittest.TestCase):
 
         So 0x37 is the value to be loaded in to the accumulator.
         """
-        self.__target.x_register = 0x03
-        self.__memory.set_address(0x0F, 0x11)
-        self.__memory.set_address(0x10, 0xFF)
-        self.__memory.set_address(0xFF11, 0x37)
-        target_func(0x0C)
-        self.assertEqual(0x37, get_register_func())
+        def assert_load_register_indexed_indirect(get_register_func, target_func):
+            self.__target.x_register = 0x03
+            self.__memory.set_address(0x0F, 0x11)
+            self.__memory.set_address(0x10, 0xFF)
+            self.__memory.set_address(0xFF11, 0x37)
+            target_func(0x0C)
+            self.assertEqual(0x37, get_register_func())
 
-    def test_lda_indirect_indexed(self):
         mappings = {
-        self.__target.lda_indirect_indexed: lambda: self.__target.accumulator,
-        self.__target.ldx_indirect_indexed: lambda: self.__target.x_register,
-        self.__target.ldy_indirect_indexed: lambda: self.__target.y_register
-
+            self.__get_accumulator: self.__target.lda_indexed_indirect,
+            self.__get_x_register: self.__target.ldx_indexed_indirect,
+            self.__get_y_register: self.__target.ldy_indexed_indirect
         }
 
-        for k, v in mappings.items():
-            self.__assert_load_register_indirect_indexed(k, v)
+        for k,v in mappings.items():
+            assert_load_register_indexed_indirect(k, v)
 
-    def __assert_load_register_indirect_indexed(self, target_func, get_register_func):
+    def test_load_register_indirect_indexed(self):
         """
         Indirect indexed addressing is done by taking the address given and the one after it and using the values to
         make a new 16-bit address. Add the value of the Y-register to that address and load the value that is at the
@@ -243,9 +299,19 @@ class TestChip6502(unittest.TestCase):
 
         Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
         """
-        self.__target.y_register = 0x02
-        self.__memory.set_address(0x02, 0x01)
-        self.__memory.set_address(0x03, 0x12)
-        self.__memory.set_address(0x1203, 0xFE)
-        target_func(0x02)
-        self.assertEqual(0xFE, get_register_func())
+        def assert_load_register_indirect_indexed(target_func, get_register_func):
+            self.__target.y_register = 0x02
+            self.__memory.set_address(0x02, 0x01)
+            self.__memory.set_address(0x03, 0x12)
+            self.__memory.set_address(0x1203, 0xFE)
+            target_func(0x02)
+            self.assertEqual(0xFE, get_register_func())
+
+        mappings = {
+            self.__target.lda_indirect_indexed: self.__get_accumulator,
+            self.__target.ldx_indirect_indexed: self.__get_x_register,
+            self.__target.ldy_indirect_indexed: self.__get_y_register
+        }
+
+        for k, v in mappings.items():
+            assert_load_register_indirect_indexed(k, v)

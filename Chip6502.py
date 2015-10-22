@@ -13,6 +13,34 @@ class Chip6502(object):
         self.__y_register = 0x0
         self.__ram = memory
 
+        self.lda_immediate = lambda val: self.__load_register_immediate(val, self.__set_accumulator)
+        self.ldx_immediate = lambda val: self.__load_register_immediate(val, self.__set_x_register)
+        self.ldy_immediate = lambda val: self.__load_register_immediate(val, self.__set_y_register)
+
+        # See my unit test for sta_immediate_or_absolute: either I misunderstand or one of these two doesn't exist.
+        self.sta_immediate = lambda addr: self.__store_register_immediate(addr, self.__get_accumulator)
+        self.stx_immediate = lambda addr: self.__store_register_immediate(addr, self.__get_x_register)
+        self.sty_immediate = lambda addr: self.__store_register_immediate(addr, self.__get_y_register)
+
+        self.sta_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_accumulator)
+        self.stx_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_x_register)
+        self.sty_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_y_register)
+
+        self.lda_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_accumulator)
+        self.ldx_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_x_register)
+        self.ldy_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_y_register)
+
+        self.ldx_indexed_indirect = lambda addr: self.__load_indexed_indirect_register(addr, self.__set_x_register)
+        self.ldy_indexed_indirect = lambda addr: self.__load_indexed_indirect_register(addr, self.__set_y_register)
+
+        self.lda_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_accumulator)
+        self.ldx_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_x_register)
+        self.ldy_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_y_register)
+
+        self.__get_accumulator = lambda: self.accumulator
+        self.__get_x_register = lambda: self.x_register
+        self.__get_y_register = lambda: self.y_register
+
     @property
     def accumulator(self):
         """
@@ -25,9 +53,7 @@ class Chip6502(object):
 
     @accumulator.setter
     def accumulator(self, val):
-        """
-        The accumulator keeps track of what's going on in the chip
-        """
+        # Set the accumulator
         def set_register():
             self.__accumulator = val
 
@@ -48,9 +74,7 @@ class Chip6502(object):
 
     @x_register.setter
     def x_register(self, val):
-        """
-        The X register is a general data-storage register.
-        """
+        # set the x-register
         def set_register():
             self.__x_register = val
 
@@ -71,9 +95,7 @@ class Chip6502(object):
 
     @y_register.setter
     def y_register(self, val):
-        """
-        The Y register is a general data-storage register.
-        """
+        #Set the y-register
         def set_register():
             self.__y_register = val
 
@@ -99,7 +121,6 @@ class Chip6502(object):
         Raises:
             RegisterOverflowException: val is longer than two bytes (0xFF)
         """
-
         def check_overflow():
             if val > 0xFF:
                 raise RegisterOverflowException
@@ -121,23 +142,39 @@ class Chip6502(object):
         set_zero_flag()
         set_negative_flag()
 
-    def lda_immediate(self, value):
+    def __load_register_immediate(self, value, set_register_func):
         """
-        The LDA immediate instruction loads the accumulator with the value supplied.
+        Loading a register using immediate addressing loads the register with the value given.
+
+        E.g. LDA 0x01 loads the value 0x01 into the accumulator
 
         Args:
-            value: The value to load into the accumulator
+            value: The value to load into the register
+            set_register_func: A function to use to set the value of the register
         """
-        self.accumulator = value
+        set_register_func(value)
 
-    def lda_absolute(self, address):
+    def __store_register_immediate(self, address, get_register_func):
         """
-        The LDA absolute instruction stores that value of the memory address specified in address into the accumulator
+        Storing a register using immediate addressing stores the value of the register into the memory address provided
+
+        E.g. STA 0x01 causes the accumulator to be stored to memory location 0x01
 
         Args:
-            address: The memory address whose value is to be loaded into the accumulator
+            address: The memory address to store the contents of the register to
+            get_register_func: A function by which the contents of the register can be retrieved
         """
-        self.accumulator = self.__ram.get_address(address)
+        self.__ram.set_address(address, get_register_func())
+
+    def __load_register_absolute(self, address, set_register_func):
+        """
+        Loading a register using absolute addressing stores the value at the memory address specified into the register
+
+        Args:
+            address: The memory address whose value is to be loaded into the register
+            set_register_func: A function to use to set the value of the register
+        """
+        set_register_func(self.__ram.get_address(address))
 
     def lda_absolute_indexed(self, address, register):
         self.__load_absolute_indexed_register(address, register, self.__set_accumulator)
@@ -145,47 +182,8 @@ class Chip6502(object):
     def lda_indexed_indirect(self, address):
         self.__load_indexed_indirect_register(address, self.__set_accumulator)
 
-    def ldx_immediate(self, value):
-        """
-        The LDX immediate instruction loads the X register with the value supplied.
-
-        Args:
-            value: The value to loads into the X register
-        """
-        self.x_register = value
-
-    def ldx_absolute(self, address):
-        """
-        The LDX absolute instruction stores that value of the memory address specified in address into the x register
-
-        Args:
-            address: The memory address whose value is to be loaded into the x register
-        """
-        self.x_register = self.__ram.get_address(address)
-
     def ldx_absolute_indexed(self, address, register):
         self.__load_absolute_indexed_register(address, register, self.__set_x_register)
-
-    def ldx_indexed_indirect(self, address):
-        self.__load_indexed_indirect_register(address, self.__set_x_register)
-
-    def ldy_immediate(self, value):
-        """
-        The LDY immediate instruction loads the Y register with the value supplied.
-
-        Args:
-            value: The value to loads into the Y register
-        """
-        self.y_register = value
-
-    def ldy_absolute(self, address):
-        """
-        The LDY absolute instruction stores that value of the memory address specified in address into the y register
-
-        Args:
-            address: The memory address whose value is to be loaded into the y register
-        """
-        self.y_register = self.__ram.get_address(address)
 
     def ldy_absolute_indexed(self, address, register):
         self.__load_absolute_indexed_register(address, register, self.__set_y_register)
@@ -214,9 +212,6 @@ class Chip6502(object):
         address_to_load = address + get_offset()
         set_register_func(self.__ram.get_address(address_to_load))
 
-    def ldy_indexed_indirect(self, address):
-        self.__load_indexed_indirect_register(address, self.__set_y_register)
-
     def __load_indexed_indirect_register(self, address, set_register_func):
         """
         Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
@@ -238,23 +233,8 @@ class Chip6502(object):
             address: The address that should have the X register added to it to begin the above process.
         """
         first_address = address + self.x_register
-        second_address = first_address + 0x01
-
-        first_address_contents = self.__ram.get_address(first_address)
-        second_address_contents = self.__ram.get_address(second_address)
-
-        hex_number = self.__combine_two_hex_addresses(first_address_contents, second_address_contents)
-
+        hex_number = self.__combine_two_consecutive_address_values(first_address)
         set_register_func(self.__ram.get_address(hex_number))
-
-    def lda_indirect_indexed(self, address):
-        self.__load_indirect_indexed_register(address, self.__set_accumulator)
-
-    def ldx_indirect_indexed(self, address):
-        self.__load_indirect_indexed_register(address, self.__set_x_register)
-
-    def ldy_indirect_indexed(self, address):
-        self.__load_indirect_indexed_register(address, self.__set_y_register)
 
     def __load_indirect_indexed_register(self, address, set_register_func):
         """
@@ -278,31 +258,36 @@ class Chip6502(object):
 
         Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
         """
-        first_address_contents = self.__ram.get_address(address)
-        second_address_contents = self.__ram.get_address(address+0x01)
-        combined_address = self.__combine_two_hex_addresses(first_address_contents, second_address_contents)
+        combined_address = self.__combine_two_consecutive_address_values(address)
         final_address = combined_address + self.y_register
         set_register_func(self.__ram.get_address(final_address))
 
-    def __combine_two_hex_addresses(self, address1, address2):
-        """
-        Combine two 8-bit hex numbers into a 16 bit little-endian hex number
+    def __combine_two_consecutive_address_values(self, first_address):
 
-        e.g: self.__combine_two_hex_addresses(0x02, 0x22) gives 0x2202
+        def get_two_consecutive_address_values(first_address):
+            return (self.__ram.get_address(first_address), self.__ram.get_address(first_address+0x01))
 
-        Args:
-            address1: The first hex number
-            address2: The second hex number
+        def combine_two_hex_addresses(address1, address2):
+            """
+            Combine two 8-bit hex numbers into a 16 bit little-endian hex number
 
-        Returns:
-            The two numbers combined into a 16-bit number as described above
-        """
-        def get_hex_digits(hex_value):
-            return str(hex_value).split('x')[1].zfill(2)
+            e.g: self.__combine_two_hex_addresses(0x02, 0x22) gives 0x2202
 
-        hex_address = "0x{first_digit}{second_digit}".format(first_digit=get_hex_digits(hex(address2)),
-                                                            second_digit=get_hex_digits(hex(address1)))
-        return int(hex_address, 0)
+            Args:
+                address1: The first hex number
+                address2: The second hex number
+
+            Returns:
+                The two numbers combined into a 16-bit number as described above
+            """
+            get_hex_digits = lambda hex_value: str(hex_value).split('x')[1].zfill(2)
+
+            hex_address = "0x{first_digit}{second_digit}".format(first_digit=get_hex_digits(hex(address2)),
+                                                                second_digit=get_hex_digits(hex(address1)))
+            return int(hex_address, 0)
+
+        contents1, contents2 = get_two_consecutive_address_values(first_address)
+        return combine_two_hex_addresses(contents1, contents2)
 
 class RegisterOverflowException(Exception):
     pass
