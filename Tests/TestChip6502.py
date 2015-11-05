@@ -152,9 +152,12 @@ class TestChip6502(unittest.TestCase):
         def assert_store_immediate_register(target_func, set_register_func):
             register_value=0xFF
             target_address = 0x12
+
             set_register_func(register_value)
             target_func(target_address)
+
             result = self.__memory.get_address(target_address)
+
             self.assertEqual(register_value,
                              result,
                              "Expected {target_address} to be {register_value} when calling {func}. It was {result}."
@@ -277,6 +280,24 @@ class TestChip6502(unittest.TestCase):
         for k,v in mappings.items():
             assert_load_register_indexed_indirect(k, v)
 
+    def test_store_register_indexed_indirect(self):
+
+        def assert_store_register_indexed_indirect(set_register_func, target_func):
+            self.__target.x_register = 0x03
+            set_register_func(0x37)
+            self.__memory.set_address(0x0F, 0x11)
+            self.__memory.set_address(0x10, 0xFF) # so target address is 0xFF11
+            target_func(0x0C)
+            self.assertEqual(0x37, self.__memory.get_address(0xFF11))
+
+        mappings = {
+            self.__set_accumulator: self.__target.sta_indexed_indirect,
+            self.__set_y_register: self.__target.sty_indexed_indirect
+        }
+
+        for k,v in mappings.items():
+            assert_store_register_indexed_indirect(k, v)
+
     def test_load_register_indirect_indexed(self):
         """
         Indirect indexed addressing is done by taking the address given and the one after it and using the values to
@@ -315,3 +336,20 @@ class TestChip6502(unittest.TestCase):
 
         for k, v in mappings.items():
             assert_load_register_indirect_indexed(k, v)
+
+    def test_store_register_indirect_indexed(self):
+        def assert_store_register_indirect_indexed(target_func, set_register_func):
+            self.__target.y_register = 0x02
+            set_register_func(0x11)
+            self.__memory.set_address(0x02, 0x01)
+            self.__memory.set_address(0x03, 0x12) # target address: 0x1203
+            target_func(0x02)
+            self.assertEqual(0x11, self.__memory.get_address(0x1203))
+
+        mappings = {
+            self.__target.sta_indirect_indexed: self.__set_accumulator,
+            self.__target.stx_indirect_indexed: self.__set_x_register
+        }
+
+        for k, v in mappings.items():
+            assert_store_register_indirect_indexed(k, v)

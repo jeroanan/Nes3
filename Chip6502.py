@@ -22,20 +22,27 @@ class Chip6502(object):
         self.stx_immediate = lambda addr: self.__store_register_immediate(addr, self.__get_x_register)
         self.sty_immediate = lambda addr: self.__store_register_immediate(addr, self.__get_y_register)
 
-        self.sta_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_accumulator)
-        self.stx_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_x_register)
-        self.sty_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_y_register)
-
         self.lda_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_accumulator)
         self.ldx_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_x_register)
         self.ldy_absolute = lambda addr: self.__load_register_absolute(addr, self.__set_y_register)
 
+        self.sta_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_accumulator)
+        self.stx_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_x_register)
+        self.sty_absolute = lambda addr: self.__store_register_immediate(addr, self.__get_y_register)
+
         self.ldx_indexed_indirect = lambda addr: self.__load_indexed_indirect_register(addr, self.__set_x_register)
         self.ldy_indexed_indirect = lambda addr: self.__load_indexed_indirect_register(addr, self.__set_y_register)
+        self.lda_indexed_indirect = lambda addr: self.__load_indexed_indirect_register(addr, self.__set_accumulator)
+
+        self.sta_indexed_indirect = lambda addr: self.__store_indexed_indirect_register(addr, self.__get_accumulator)
+        self.sty_indexed_indirect = lambda addr: self.__store_indexed_indirect_register(addr, self.__get_y_register)
 
         self.lda_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_accumulator)
         self.ldx_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_x_register)
         self.ldy_indirect_indexed = lambda addr: self.__load_indirect_indexed_register(addr, self.__set_y_register)
+
+        self.sta_indirect_indexed = lambda addr: self.__store_indirect_indexed_register(addr, self.__get_accumulator)
+        self.stx_indirect_indexed = lambda addr: self.__store_indirect_indexed_register(addr, self.__get_x_register)
 
         self.__get_accumulator = lambda: self.accumulator
         self.__get_x_register = lambda: self.x_register
@@ -53,12 +60,20 @@ class Chip6502(object):
 
     @accumulator.setter
     def accumulator(self, val):
-        # Set the accumulator
+        """
+        Set the accumulator.
+
+        Register setters call self.__set_register in order to set their values. This is so processor status flags can
+        be set based on the new value.
+        """
+
         def set_register():
             self.__accumulator = val
 
         self.__set_register(val, set_register)
 
+    # We have private get/set functions in addition to the property getter/setters.
+    # These are used as parameters to the set/load register functions.
     def __set_accumulator(self, val):
         self.accumulator = val
 
@@ -75,6 +90,7 @@ class Chip6502(object):
     @x_register.setter
     def x_register(self, val):
         # set the x-register
+
         def set_register():
             self.__x_register = val
 
@@ -96,6 +112,7 @@ class Chip6502(object):
     @y_register.setter
     def y_register(self, val):
         #Set the y-register
+
         def set_register():
             self.__y_register = val
 
@@ -179,9 +196,6 @@ class Chip6502(object):
     def lda_absolute_indexed(self, address, register):
         self.__load_absolute_indexed_register(address, register, self.__set_accumulator)
 
-    def lda_indexed_indirect(self, address):
-        self.__load_indexed_indirect_register(address, self.__set_accumulator)
-
     def ldx_absolute_indexed(self, address, register):
         self.__load_absolute_indexed_register(address, register, self.__set_x_register)
 
@@ -236,6 +250,11 @@ class Chip6502(object):
         hex_number = self.__combine_two_consecutive_address_values(first_address)
         set_register_func(self.__ram.get_address(hex_number))
 
+    def __store_indexed_indirect_register(self, address, get_register_func):
+        first_address = address + self.x_register
+        hex_number = self.__combine_two_consecutive_address_values(first_address)
+        self.__ram.set_address(hex_number, get_register_func())
+
     def __load_indirect_indexed_register(self, address, set_register_func):
         """
         Indirect indexed addressing is done by taking the address given and the one after it and using the values to
@@ -261,6 +280,11 @@ class Chip6502(object):
         combined_address = self.__combine_two_consecutive_address_values(address)
         final_address = combined_address + self.y_register
         set_register_func(self.__ram.get_address(final_address))
+
+    def __store_indirect_indexed_register(self, address, get_register_func):
+        combined_address = self.__combine_two_consecutive_address_values(address)
+        final_address = combined_address + self.y_register
+        self.__ram.set_address(final_address, get_register_func())
 
     def __combine_two_consecutive_address_values(self, first_address):
 
