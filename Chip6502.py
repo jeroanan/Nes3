@@ -227,6 +227,12 @@ class Chip6502(object):
         set_register_func(self.__ram.get_address(address_to_load))
 
     def __load_indexed_indirect_register(self, address, set_register_func):
+        set_register_func(self.__ram.get_address(self.__get_indexed_indirect_memory_address(address)))
+
+    def __store_indexed_indirect_register(self, address, get_register_func):
+        self.__ram.set_address(self.__get_indexed_indirect_memory_address(address), get_register_func())
+
+    def __get_indexed_indirect_memory_address(self, address):
         """
         Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
 
@@ -247,15 +253,15 @@ class Chip6502(object):
             address: The address that should have the X register added to it to begin the above process.
         """
         first_address = address + self.x_register
-        hex_number = self.__combine_two_consecutive_address_values(first_address)
-        set_register_func(self.__ram.get_address(hex_number))
+        return self.__combine_two_consecutive_address_values(first_address)
+        
+    def __load_indirect_indexed_register(self, address, set_register_func):        
+        set_register_func(self.__ram.get_address(self.__get_indirect_indexed_memory_address(address)))
 
-    def __store_indexed_indirect_register(self, address, get_register_func):
-        first_address = address + self.x_register
-        hex_number = self.__combine_two_consecutive_address_values(first_address)
-        self.__ram.set_address(hex_number, get_register_func())
+    def __store_indirect_indexed_register(self, address, get_register_func):
+        self.__ram.set_address(self.__get_indirect_indexed_memory_address(address), get_register_func())
 
-    def __load_indirect_indexed_register(self, address, set_register_func):
+    def __get_indirect_indexed_memory_address(self, address):
         """
         Indirect indexed addressing is done by taking the address given and the one after it and using the values to
         make a new 16-bit address. Add the value of the Y-register to that address and load the value that is at the
@@ -278,14 +284,8 @@ class Chip6502(object):
         Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
         """
         combined_address = self.__combine_two_consecutive_address_values(address)
-        final_address = combined_address + self.y_register
-        set_register_func(self.__ram.get_address(final_address))
-
-    def __store_indirect_indexed_register(self, address, get_register_func):
-        combined_address = self.__combine_two_consecutive_address_values(address)
-        final_address = combined_address + self.y_register
-        self.__ram.set_address(final_address, get_register_func())
-
+        return combined_address + self.y_register
+        
     def __combine_two_consecutive_address_values(self, first_address):
 
         def get_two_consecutive_address_values(first_address):
