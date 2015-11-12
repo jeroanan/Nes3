@@ -4,7 +4,7 @@ import NesMemory as memory
 
 
 class TestNesMemory(unittest.TestCase):
-    
+
     def setUp(self):
         self.__max_address = 0xFFFF
         self.__target = memory.NesMemory(self.__max_address)
@@ -30,18 +30,18 @@ class TestNesMemory(unittest.TestCase):
     def test_set_lower_mirrored_address_sets_counterpart_higher_mirrored_address(self):
         """
         If memory addresses 0x00 to 0x7FF are set, the value being set should be mirrored in the range 0x801 to 0x2000.
-        
+
         This leaves memory address 0x800 unmirrored. I haven't seen any docs saying 0x800 should be mirrored, but it's
         something to bear in mind.
         """
-        self.assert_address_is_mirrored(0x01, 0x801)
-    
+        self.__assert_address_is_mirrored(0x01, 0x801)
+
     def test_set_higher_mirrored_address_sets_counterpart_lower_mirrored_address(self):
         """
-        If a memory address of 0x801 <= address <= 0x2000 is set then the address - 0x801 should also be set 
+        If a memory address of 0x801 <= address <= 0x2000 is set then the address - 0x801 should also be set
         to the same value
         """
-        self.assert_address_is_mirrored(0x802, -0x801)
+        self.__assert_address_is_mirrored(0x802, -0x801)
 
     def test_set_address_above_lower_mirrored_range_does_not_set_higher_address(self):
         """
@@ -55,7 +55,7 @@ class TestNesMemory(unittest.TestCase):
         """
         self.__assert_set_address_is_not_mirrored(0x2001, -0x801)
 
-    def assert_address_is_mirrored(self, address, offset):
+    def __assert_address_is_mirrored(self, address, offset):
         self.__assert_address_mirroring(address, offset, 0x0E, 0x0E)
 
     def __assert_set_address_is_not_mirrored(self, address, offset):
@@ -67,3 +67,11 @@ class TestNesMemory(unittest.TestCase):
         offset_address_value = self.__target.get_address(offset_address)
         self.assertEqual(mirrored_value, offset_address_value)
 
+    def test_get_absolute_indexed_address(self):
+        def get_offset():
+            return 0x01
+
+        base_address = 0x02
+        self.assertEqual(0x03, self.__target.get_absolute_indexed_address(base_address, get_offset))
+
+    

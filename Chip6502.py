@@ -203,89 +203,29 @@ class Chip6502(object):
         self.__load_absolute_indexed_register(address, register, self.__set_y_register)
 
     def __load_absolute_indexed_register(self, address, register, set_register_func):
-        """
-        Load data into a register. The data is located in the given address plus the value held in a given register.
+        offset_function = self.__get_y_register
+        if register == "X":
+            offset_function = self.__get_x_register
 
-        e.g. If address given is 0x01 and the X-register contains 0x04, then the following call:
-
-        self.__load_absolute_indexed_register(0x01, "X"...)
-
-        will result in us looking at memory address 0x01 + 0x04 = 0x05. If 0x05 contains 0x12 then 0x12 is loaded into
-        the register using set_register_func.
-
-        Args:
-            address: The address to beign at
-            register: The register to look at to get the offset to combine with address to get the final memory location
-            set_register_func: A function accepting a value that sets the relevant register.
-        """
-        def get_offset():
-            if register == "X":
-                return self.x_register
-            return self.y_register
-
-        address_to_load = address + get_offset()
+        address_to_load = self.__ram.get_absolute_indexed_address(address, offset_function)
         set_register_func(self.__ram.get_address(address_to_load))
 
     def __load_indexed_indirect_register(self, address, set_register_func):
-        set_register_func(self.__ram.get_address(self.__get_indexed_indirect_memory_address(address)))
+        addr = self.__ram.get_indexed_indirect_memory_address(address, self.x_register)
+        set_register_func(self.__ram.get_address(addr))
 
     def __store_indexed_indirect_register(self, address, get_register_func):
-        self.__ram.set_address(self.__get_indexed_indirect_memory_address(address), get_register_func())
+        addr = self.__ram.get_indexed_indirect_memory_address(address, self.x_register)
+        self.__ram.set_address(addr, get_register_func())
 
-    def __get_indexed_indirect_memory_address(self, address):
-        """
-        Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
-
-        This gives a new address. Load that and the next address along and combine them into a little-endian number to
-        get another address. Load the contents of that address into the register.
-
-        E.g. LDA $000C,X when x-register is 3 gives us a new address:
-
-        0x000F
-
-        0x000F contains 0x11. 0x0010 contains 0xFF. This give us a little-endian number that is the final address to visit:
-
-        0xFF11, which contains 0x37.
-
-        So 0x37 is the value to be loaded in to the accumulator.
-
-        Args:
-            address: The address that should have the X register added to it to begin the above process.
-        """
-        first_address = address + self.x_register
-        return self.__combine_two_consecutive_address_values(first_address)
-        
-    def __load_indirect_indexed_register(self, address, set_register_func):        
-        set_register_func(self.__ram.get_address(self.__get_indirect_indexed_memory_address(address)))
+    def __load_indirect_indexed_register(self, address, set_register_func):
+        addr = self.__ram.get_indirect_indexed_memory_address(address, self.y_register)
+        set_register_func(self.__ram.get_address(addr))
 
     def __store_indirect_indexed_register(self, address, get_register_func):
-        self.__ram.set_address(self.__get_indirect_indexed_memory_address(address), get_register_func())
+        addr = self.__ram.get_indirect_indexed_memory_address(address, self.y_register)
+        self.__ram.set_address(addr, get_register_func())
 
-    def __get_indirect_indexed_memory_address(self, address):
-        """
-        Indirect indexed addressing is done by taking the address given and the one after it and using the values to
-        make a new 16-bit address. Add the value of the Y-register to that address and load the value that is at the
-        final address.
-
-        e.g. LDA(0x02),Y where:
-
-           * 0x02 contains 0x01
-           * 0x03 contains 0x12
-           * The Y-register contains 0x02
-
-        Then combine 0x02 and 0x03 to make a little-endian address:
-
-        0x01 + 0x12 = 0x1201
-
-        Then add the contents of the Y-register:
-
-        0x1201 + 0x02 = 0x1203
-
-        Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
-        """
-        combined_address = self.__combine_two_consecutive_address_values(address)
-        return combined_address + self.y_register
-        
     def __combine_two_consecutive_address_values(self, first_address):
 
         def get_two_consecutive_address_values(first_address):
@@ -312,6 +252,16 @@ class Chip6502(object):
 
         contents1, contents2 = get_two_consecutive_address_values(first_address)
         return combine_two_hex_addresses(contents1, contents2)
+
+    def clc(self):
+        """
+        Clear the carry flag
+
+        Causes the carry flag to become 0x0 no matter what its current value is.
+
+        Addressing modes: Implied addressing only.
+        """
+        self.carry_flag = 0x0
 
 class RegisterOverflowException(Exception):
     pass

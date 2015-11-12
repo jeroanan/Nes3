@@ -281,7 +281,22 @@ class TestChip6502(unittest.TestCase):
             assert_load_register_indexed_indirect(k, v)
 
     def test_store_register_indexed_indirect(self):
+        """
+        Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
 
+        This gives a new address. Load that and the next address along and combine them into a little-endian number to
+        get another address. Load the contents of that address into the register.
+
+        E.g. LDA $000C,X when x-register is 3 gives us a new address:
+
+        0x000F
+
+        0x000F contains 0x11. 0x0010 contains 0xFF. This give us a little-endian number that is the final address to visit:
+
+        0xFF11, which contains 0x37.
+
+        So 0x37 is the value to be loaded in to the accumulator.
+        """
         def assert_store_register_indexed_indirect(set_register_func, target_func):
             self.__target.x_register = 0x03
             set_register_func(0x37)
@@ -338,6 +353,22 @@ class TestChip6502(unittest.TestCase):
             assert_load_register_indirect_indexed(k, v)
 
     def test_store_register_indirect_indexed(self):
+        """
+        Indexed indirect addressing is done by taking the given address and adding the contents of the X register.
+
+        This gives a new address. Load that and the next address along and combine them into a little-endian number to
+        get another address. Load the contents of that address into the register.
+
+        E.g. LDA $000C,X when x-register is 3 gives us a new address:
+
+        0x000F
+
+        0x000F contains 0x11. 0x0010 contains 0xFF. This give us a little-endian number that is the final address to visit:
+
+        0xFF11, which contains 0x37.
+
+        So 0x37 is the value to be loaded in to the accumulator.
+        """
         def assert_store_register_indirect_indexed(target_func, set_register_func):
             self.__target.y_register = 0x02
             set_register_func(0x11)
@@ -353,3 +384,15 @@ class TestChip6502(unittest.TestCase):
 
         for k, v in mappings.items():
             assert_store_register_indirect_indexed(k, v)
+
+    def test_clc(self):
+        """
+        Test that when the CLC instruction is issued, the carry flag is set to zero.
+        """
+        values = [0x0, 0x1]
+        for v in values:
+            self.__target.carry_flag = v
+            self.__target.clc()
+            self.assertEqual(0x0,
+                            self.__target.carry_flag,
+                            "Carry flag not cleared from starting state of {state}".format(state=v))
