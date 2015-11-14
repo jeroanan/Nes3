@@ -52,6 +52,8 @@ class Chip6502(object):
         self.adc_immediate = lambda operand: self.__add_to_accumulator(operand)
         self.adc_indexed_indirect = lambda addr: self.__add_to_accumulator(
             self.__ram.get_address(self.__ram.get_indexed_indirect_memory_address(addr, self.__get_x_register())))
+        self.adc_indirect_indexed = lambda addr: self.__add_to_accumulator(
+            self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
     @property
     def accumulator(self):

@@ -15,6 +15,7 @@ class TestAdc(unittest.TestCase):
             self.__get_accumulator = register.get_accumulator_func(self.__target)
             self.__set_accumulator = register.set_accumulator_func(self.__target)
             self.__set_x_register = register.set_x_register_func(self.__target)
+            self.__set_y_register = register.set_y_register_func(self.__target)
 
         def init_flag_functions():
             self.__set_carry_flag = flag.set_carry_flag_func(self.__target)
@@ -31,7 +32,8 @@ class TestAdc(unittest.TestCase):
             "do_immediate_add": self.__do_immediate_add,
             "do_absolute_add": self.__do_absolute_add,
             "do_absolute_indexed_add": self.__do_absolute_indexed_add,
-            "do_indexed_indirect_add": self.__do_indexed_indirect_add
+            "do_indexed_indirect_add": self.__do_indexed_indirect_add,
+            "do_indirect_indexed_add": self.__do_indirect_indexed_add
         }
 
     def test_adc_adds_numbers(self):
@@ -131,3 +133,13 @@ class TestAdc(unittest.TestCase):
         self.__memory.set_address(0x0302, operand)
 
         self.__target.adc_indexed_indirect(base_address)
+
+    def __do_indirect_indexed_add(self, operand):
+        self.__set_y_register(0x02)
+        base_address = 0x03
+
+        self.__memory.set_address(0x03, 0x08)
+        self.__memory.set_address(0x04, 0x0F)
+        self.__memory.set_address(0x0F0A, operand)
+
+        self.__target.adc_indirect_indexed(base_address)

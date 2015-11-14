@@ -106,7 +106,7 @@ class NesMemory(object):
 
         Supposing 0x1203 contains 0xFE then load 0xFE into the accumulator.
         """
-        combined_address = self.__combine_two_consecutive_address_values(address)
+        combined_address = self.__combine_two_consecutive_address_values(address)        
         return combined_address + y_register
 
     def __combine_two_consecutive_address_values(self, first_address):
