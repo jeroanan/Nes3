@@ -2,7 +2,7 @@ import unittest
 
 import Chip6502 as chip
 import NesMemory as memory
-
+import Tests.Util.Register as register
 
 class TestChip6502(unittest.TestCase):
 
@@ -11,23 +11,12 @@ class TestChip6502(unittest.TestCase):
         self.__target = chip.Chip6502(self.__memory)
         self.__registers = ['accumulator', 'x_register', 'y_register']
 
-    def __get_accumulator(self):
-        return self.__target.accumulator
-
-    def __set_accumulator(self, val):
-        self.__target.accumulator = val
-
-    def __get_x_register(self):
-        return self.__target.x_register
-
-    def __set_x_register(self, val):
-        self.__target.x_register = val
-
-    def __get_y_register(self):
-        return self.__target.y_register
-
-    def __set_y_register(self, val):
-        self.__target.y_register = val
+        self.__get_accumulator = register.get_accumulator_func(self.__target)
+        self.__set_accumulator = register.set_accumulator_func(self.__target)
+        self.__get_x_register = register.get_x_register_func(self.__target)
+        self.__set_x_register = register.set_x_register_func(self.__target)
+        self.__get_y_register = register.get_y_register_func(self.__target)
+        self.__set_y_register = register.set_y_register_func(self.__target)
 
     def test_instantiation_zeroes_internal_state(self):
         """

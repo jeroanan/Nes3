@@ -48,6 +48,11 @@ class Chip6502(object):
         self.__get_x_register = lambda: self.x_register
         self.__get_y_register = lambda: self.y_register
 
+        self.adc_absolute = lambda address: self.__add_to_accumulator(self.__ram.get_address(address))
+        self.adc_immediate = lambda operand: self.__add_to_accumulator(operand)
+        self.adc_indexed_indirect = lambda addr: self.__add_to_accumulator(
+            self.__ram.get_address(self.__ram.get_indexed_indirect_memory_address(addr, self.__get_x_register())))
+
     @property
     def accumulator(self):
         """
@@ -262,6 +267,25 @@ class Chip6502(object):
         Addressing modes: Implied addressing only.
         """
         self.carry_flag = 0x0
+
+    def adc_absolute_indexed(self, address, register):
+        get_register_func = self.__get_y_register
+
+        if register == 'X':
+            get_register_func = self.__get_x_register
+
+        self.__add_to_accumulator(self.__ram.get_address(address + get_register_func()))
+
+    def __add_to_accumulator(self, operand):
+        the_sum = self.__accumulator + operand + self.carry_flag
+
+        if the_sum > 0xFF:
+            the_sum = 0xFF
+            self.carry_flag = 0x01
+        else:
+            self.carry_flag = 0x00
+
+        self.__set_accumulator(the_sum)
 
 class RegisterOverflowException(Exception):
     pass
