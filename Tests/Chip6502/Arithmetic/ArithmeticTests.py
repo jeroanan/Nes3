@@ -25,3 +25,24 @@ class ArithmeticTests(unittest.TestCase):
 
         init_register_functions()
         init_flag_functions()
+
+    def prepare_absolute_operation(self, operand):
+        self.memory.set_address(0x03, operand)
+
+    def prepare_absolute_indexed_operation(self, operand):
+        self.memory.set_address(0x04, operand)
+        self.set_x_register(0x02)
+
+    def prepare_indexed_indirect_operation(self, operand):
+        self.set_x_register(0x02)
+
+        self.memory.set_address(0x05, 0x02)
+        self.memory.set_address(0x06, 0x03)
+        self.memory.set_address(0x0302, operand)
+
+    def prepare_indirect_indexed_operation(self, operand):
+        self.set_y_register(0x02)
+
+        self.memory.set_address(0x03, 0x08)
+        self.memory.set_address(0x04, 0x0F)
+        self.memory.set_address(0x0F0A, operand)

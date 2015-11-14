@@ -33,30 +33,19 @@ class TestSbc(at.ArithmeticTests):
         self.target.sbc_immediate(operand)
 
     def __do_absolute_subtraction(self, operand):
-        self.memory.set_address(0x03, operand)
+        self.prepare_absolute_operation(operand)
         self.target.sbc_absolute(0x03)
 
     def __do_absolute_indexed_subtraction(self, operand):
-        self.memory.set_address(0x04, operand)
-        self.set_x_register(0x02)
+        self.prepare_absolute_indexed_operation(operand)
         self.target.sbc_absolute_indexed(0x02, 'X')
 
     def __do_indexed_indirect_subtraction(self, operand):
-        self.set_x_register(0x02)
         base_address = 0x03
-
-        self.memory.set_address(0x05, 0x02)
-        self.memory.set_address(0x06, 0x03)
-        self.memory.set_address(0x0302, operand)
-
+        self.prepare_indexed_indirect_operation(operand)
         self.target.sbc_indexed_indirect(base_address)
 
     def __do_indirect_indexed_subtraction(self, operand):
-        self.set_y_register(0x02)
         base_address = 0x03
-
-        self.memory.set_address(0x03, 0x08)
-        self.memory.set_address(0x04, 0x0F)
-        self.memory.set_address(0x0F0A, operand)
-
+        self.prepare_indirect_indexed_operation(operand)
         self.target.sbc_indirect_indexed(base_address)
