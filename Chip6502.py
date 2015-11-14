@@ -56,6 +56,11 @@ class Chip6502(object):
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
         self.sbc_immediate = lambda operand: self.__subtract_from_accumulator(operand)
+        self.sbc_absolute = lambda addr: self.__subtract_from_accumulator(self.__ram.get_address(addr))
+        self.sbc_indexed_indirect = lambda addr: self.__subtract_from_accumulator(
+            self.__ram.get_address(self.__ram.get_indexed_indirect_memory_address(addr, self.__get_x_register())))
+        self.sbc_indirect_indexed = lambda addr: self.__subtract_from_accumulator(
+            self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
     @property
     def accumulator(self):
@@ -283,12 +288,20 @@ class Chip6502(object):
         self.carry_flag = 0x1
 
     def adc_absolute_indexed(self, address, register):
+        get_register_func = self.__get_register_func_from_register_letter(register)
+        self.__add_to_accumulator(self.__ram.get_address(address + get_register_func()))
+
+    def sbc_absolute_indexed(self, address, register):
+        get_register_func = self.__get_register_func_from_register_letter(register)
+        self.__subtract_from_accumulator(self.__ram.get_address(address + get_register_func()))
+
+    def __get_register_func_from_register_letter(self, register_letter):
         get_register_func = self.__get_y_register
 
-        if register == 'X':
+        if register_letter == 'X':
             get_register_func = self.__get_x_register
 
-        self.__add_to_accumulator(self.__ram.get_address(address + get_register_func()))
+        return get_register_func
 
     def __add_to_accumulator(self, operand):
         the_sum = self.__accumulator + operand + self.carry_flag
