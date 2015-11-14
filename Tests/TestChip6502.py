@@ -378,10 +378,20 @@ class TestChip6502(unittest.TestCase):
         """
         Test that when the CLC instruction is issued, the carry flag is set to zero.
         """
+        self.__assert_carry_flag(self.__target.clc, 0x0)
+
+    def test_sec(self):
+        """
+        Test that when the SEC instruction is issued, the carry flag is set to 1.
+        """
+        self.__assert_carry_flag(self.__target.sec, 0x1)
+
+    def __assert_carry_flag(self, carry_flag_init_func, expected_value):
         values = [0x0, 0x1]
         for v in values:
             self.__target.carry_flag = v
-            self.__target.clc()
-            self.assertEqual(0x0,
+            carry_flag_init_func()
+            self.assertEqual(expected_value,
                             self.__target.carry_flag,
-                            "Carry flag not cleared from starting state of {state}".format(state=v))
+                            """Carry flag not expected value of {ex} from starting state of {state}.
+                            Instead it was {val}""".format(state=v, ex=expected_value, val=self.__target.carry_flag))

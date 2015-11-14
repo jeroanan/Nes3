@@ -268,6 +268,16 @@ class Chip6502(object):
         """
         self.carry_flag = 0x0
 
+    def sec(self):
+        """
+        Set the carry flag.
+
+        Causes the carry flag to become 0x1 no matter what its current value is.
+
+        Addressing modes: Implied addressing only.
+        """
+        self.carry_flag = 0x1
+
     def adc_absolute_indexed(self, address, register):
         get_register_func = self.__get_y_register
 
@@ -284,6 +294,14 @@ class Chip6502(object):
             self.carry_flag = 0x01
         else:
             self.carry_flag = 0x00
+
+        accumulator_seventh_bit = 0x80 & self.__get_accumulator()
+        result_seventh_bit = 0x80 & the_sum
+
+        if accumulator_seventh_bit != result_seventh_bit:
+            self.overflow_flag = 0x01
+        else:
+            self.overflow_flag = 0x00
 
         self.__set_accumulator(the_sum)
 

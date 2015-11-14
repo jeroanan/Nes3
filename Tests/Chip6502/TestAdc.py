@@ -3,15 +3,28 @@ import unittest
 import Chip6502 as chip
 import NesMemory as memory
 import Tests.Util.Register as register
+import Tests.Util.Flag as flag
 
 class TestAdc(unittest.TestCase):
 
     def setUp(self):
         self.__memory = memory.NesMemory(0xFFFF)
         self.__target = chip.Chip6502(self.__memory)
-        self.__get_accumulator = register.get_accumulator_func(self.__target)
-        self.__set_accumulator = register.set_accumulator_func(self.__target)
-        self.__set_x_register = register.set_x_register_func(self.__target)
+
+        def init_register_functions():
+            self.__get_accumulator = register.get_accumulator_func(self.__target)
+            self.__set_accumulator = register.set_accumulator_func(self.__target)
+            self.__set_x_register = register.set_x_register_func(self.__target)
+
+        def init_flag_functions():
+            self.__set_carry_flag = flag.set_carry_flag_func(self.__target)
+            self.__clear_carry_flag = flag.clear_carry_flag_func(self.__target)
+            self.__set_overflow_flag = flag.set_overflow_flag_func(self.__target)
+            self.__clear_overflow_flag = flag.clear_overflow_flag_func(self.__target)
+            self.__get_overflow_flag = flag.get_overflow_flag_func(self.__target)
+
+        init_register_functions()
+        init_flag_functions()
         self.__set_accumulator(0x01)
 
         self.__addition_funcs = {
@@ -56,11 +69,11 @@ class TestAdc(unittest.TestCase):
                                          fv=actual_flag_value))
 
     def test_adc_adds_carry_flag(self):
-        for func_name, addition_func in self.__addition_funcs.items():
 
+        for func_name, addition_func in self.__addition_funcs.items():
             self.__set_accumulator(0x01)
             operand = 0x01
-            self.__target.carry_flag = 0x01
+            self.__set_carry_flag()
             expected_result = 0x03
 
             addition_func(operand)
@@ -69,6 +82,32 @@ class TestAdc(unittest.TestCase):
                              "Expected {ex} when executing {fn}. Got {ac}.".format(ex=expected_result,
                                                                                    fn=func_name,
                                                                                    ac=self.__get_accumulator()))
+
+    def test_adc_sets_overflow_flag(self):
+        """
+        Test that when an addition operation takes place that causes the accumulator's seventh bit (the sign bit) to
+        change value, the overflow flag is set.
+        """
+        self.__assert_overflow_flag(self.__clear_overflow_flag, 0x7F, 0x01)
+
+    def test_adc_clears_overflow_flag(self):
+        """
+        Test that when an addition operation takes place that does not cause the accumulator's seventh bit (the sign
+        bit) to change value, the overflow flag is cleared.
+        """
+        self.__assert_overflow_flag(self.__set_overflow_flag, 0x01, 0x00)
+
+    def __assert_overflow_flag(self, overflow_flag_init_func, operand, expected_result):
+        for func_name, addition_func in self.__addition_funcs.items():
+            overflow_flag_init_func()
+            self.__set_accumulator(0x01)
+
+            addition_func(operand)
+            self.assertEqual(expected_result,
+                             self.__get_overflow_flag(),
+                             "Expected {ex} when executing {fn}. Got: {of}".format(ex=expected_result,
+                                                                                   fn=func_name,
+                                                                                   of=self.__get_overflow_flag()))
 
     def __do_immediate_add(self, accumulator_value=0x01, operand=0x01):
         self.__set_accumulator(accumulator_value)
