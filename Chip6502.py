@@ -62,7 +62,12 @@ class Chip6502(object):
         self.sbc_indirect_indexed = lambda addr: self.__subtract_from_accumulator(
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
-        self.inc_immediate = lambda address: self.__increment_memory_value(address)
+        self.inc_immediate = lambda addr: self.__increment_memory_value(addr)
+        self.inc_absolute = lambda addr: self.__increment_memory_value(self.__ram.get_address(addr))
+        self.inc_indexed_indirect = lambda addr: self.__increment_memory_value(
+            self.__ram.get_address(self.__ram.get_indexed_indirect_memory_address(addr, self.__get_x_register())))
+        self.inc_indirect_indexed = lambda addr: self.__increment_memory_value(
+            self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
     @property
     def accumulator(self):
@@ -343,7 +348,9 @@ class Chip6502(object):
 
         self.__set_accumulator(the_sum)
 
-
+    def inc_absolute_indexed(self, address, register):
+        get_register_func = self.__get_register_func_from_register_letter(register)
+        self.__increment_memory_value(self.__ram.get_address(address + get_register_func()))
 
     def __increment_memory_value(self, address):
         address_value = self.__ram.get_address(address)
