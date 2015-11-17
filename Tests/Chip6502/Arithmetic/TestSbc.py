@@ -18,17 +18,7 @@ class TestSbc(at.ArithmeticTests):
         }
 
     def test_sbc_subtracts_numbers(self):
-        for func_name, subtraction_func in self.arithmetic_funcs.items():
-            self.set_carry_flag()
-            self.__init_accumulator()
-            subtraction_func(operand=0x02)
-            expected_result = 0x03
-            actual_result = self.get_accumulator()
-            self.assertEqual(expected_result,
-                             actual_result,
-                             "Got {result} while executing {fn}. Expected {expected}.".format(result=actual_result,
-                                                                                              fn=func_name,
-                                                                                              expected=expected_result))
+        self.assert_performs_arithmetic(self.set_carry_flag, self.__init_accumulator)
 
     def test_sbc_sets_carry_flag_when_necessary(self):
         accumulator_value = 0x04

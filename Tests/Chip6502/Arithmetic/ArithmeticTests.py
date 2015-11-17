@@ -96,3 +96,16 @@ class ArithmeticTests(unittest.TestCase):
                               "Expected {ex} when executing {fn}. Got {ac}.".format(ex=expected_result,
                                                                                     fn=func_name,
                                                                                     ac=self.get_accumulator()))
+
+    def assert_performs_arithmetic(self, init_carry_flag_func, init_accumulator_func):
+        expected_value = 0x03
+
+        for func_name, addition_func in self.arithmetic_funcs.items():
+            init_carry_flag_func()
+            init_accumulator_func()
+            addition_func(operand=0x02)
+            self.assertEqual(expected_value,
+                             self.get_accumulator(),
+                             "Expected value {ex} when executing {fn}. Got {ac}".format(ex=expected_value,
+                                                                                        fn=func_name,
+                                                                                        ac=self.get_accumulator()))

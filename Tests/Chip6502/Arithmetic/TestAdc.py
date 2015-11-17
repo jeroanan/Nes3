@@ -4,7 +4,6 @@ import Tests.Chip6502.Arithmetic.ArithmeticTests as at
 class TestAdc(at.ArithmeticTests):
 
     def setUp(self):
-
         super().setUp()
 
         self.__init_accumulator = lambda: self.set_accumulator(0x01)
@@ -19,16 +18,7 @@ class TestAdc(at.ArithmeticTests):
         }
 
     def test_adc_adds_numbers(self):
-        expected_value = 0x03
-
-        for func_name, addition_func in self.arithmetic_funcs.items():
-            self.__init_accumulator()
-            addition_func(operand=0x02)
-            self.assertEqual(expected_value,
-                             self.get_accumulator(),
-                             "Expected value {ex} when executing {fn}. Got {ac}".format(ex=expected_value,
-                                                                                        fn=func_name,
-                                                                                        ac=self.get_accumulator()))
+        self.assert_performs_arithmetic(self.clear_carry_flag, self.__init_accumulator)
 
     def test_adc_sets_carry_flag_when_necessary(self):
         accumulator_value = 0xFD
