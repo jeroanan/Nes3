@@ -353,8 +353,15 @@ class Chip6502(object):
         self.__increment_memory_value(self.__ram.get_address(address + get_register_func()))
 
     def __increment_memory_value(self, address):
+        def set_negative_flag(val):
+            if val & 0x80 == 0x80:
+                self.negative_flag = 0x01
+            else:
+                self.negative_flag = 0x00
+
         address_value = self.__ram.get_address(address)
         self.__ram.set_address(address, address_value + 0x01)
+        set_negative_flag(self.__ram.get_address(address))
 
 class RegisterOverflowException(Exception):
     pass

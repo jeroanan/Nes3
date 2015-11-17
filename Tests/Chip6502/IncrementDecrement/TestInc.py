@@ -30,10 +30,20 @@ class TestInc(base_test.BaseTest):
                              .format(fn=func_name, ex=expected_result, ar=actual_result))
 
     def test_inc_sets_negative_flag(self):
-        pass
+        expected_result = 0x1
+        
+        for func_name, func in self.__inc_funcs.items():
+            self.clear_negative_flag()
+            self.memory.set_address(self.__memory_address_to_increment, 0x7F)
+            func()
+            actual_result = self.get_negative_flag()
+
+            self.assertEqual(expected_result,
+                             actual_result,
+                             "Incorrect negative flag after executing {fn}. Expeced {ex} but got {ar}."
+                             .format(fn=func_name, ex=expected_result, ar=actual_result))
 
     def __do_inc_immediate(self):
-        self.memory.set_address(0x01, 0x01)
         self.target.inc_immediate(self.__memory_address_to_increment)
 
     def __do_inc_absolute(self):

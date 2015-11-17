@@ -18,6 +18,16 @@ def set_overflow_flag_func(chip):
         chip.overflow_flag = 0x1
     return set_overflow_flag
 
+def clear_negative_flag_func(chip):
+    def clear_negative_flag():
+        chip.negative_flag = 0x0
+    return clear_negative_flag
+
+def get_negative_flag_func(chip):
+    def get_negative_flag():
+        return chip.negative_flag
+    return get_negative_flag
+    
 def clear_overflow_flag_func(chip):
     def clear_overflow_flag():
         chip.overflow_flag = 0x0
