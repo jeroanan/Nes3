@@ -1,12 +1,12 @@
-import Tests.Chip6502.BaseTest as base_test
+import Tests.Chip6502.IncrementDecrement.IncDecBaseTest as base_test
 
-class TestInc(base_test.BaseTest):
+class TestInc(base_test.IncDecBaseTest):
 
 
     def setUp(self):
         super().setUp()
 
-        self.__inc_funcs = {'inc_immediate': self.__do_inc_immediate,
+        self.inc_dec_funcs = {'inc_immediate': self.__do_inc_immediate,
                              'inc_absolute': self.__do_inc_absolute,
                              'inc_absolute_indexed': self.__do_inc_absolute_indexed,
                              'inc_indexed_indirect': self.__do_inc_indexed_indirect,
@@ -20,28 +20,12 @@ class TestInc(base_test.BaseTest):
     def test_inc_increments_memory_value(self):
         expected_result = 0x02
 
-        for func_name, func in self.__inc_funcs.items():
-            self.__init_memory()
-            func()
-            actual_result = self.memory.get_address(self.__memory_address_to_increment)
-            self.assertEqual(expected_result,
-                             actual_result,
-                             "Incorrect memory value retrieved when executing {fn}. Expected {ex} but got {ar}."
-                             .format(fn=func_name, ex=expected_result, ar=actual_result))
+        self.assert_inc_dec_decrements_memory_value(expected_result,
+                                                    self.__init_memory,
+                                                    self.__memory_address_to_increment)
 
     def test_inc_sets_negative_flag(self):
-        expected_result = 0x1
-        
-        for func_name, func in self.__inc_funcs.items():
-            self.clear_negative_flag()
-            self.memory.set_address(self.__memory_address_to_increment, 0x7F)
-            func()
-            actual_result = self.get_negative_flag()
-
-            self.assertEqual(expected_result,
-                             actual_result,
-                             "Incorrect negative flag after executing {fn}. Expeced {ex} but got {ar}."
-                             .format(fn=func_name, ex=expected_result, ar=actual_result))
+        self.assert_inc_dec_sets_negative_flag(0x7F, self.__memory_address_to_increment)
 
     def __do_inc_immediate(self):
         self.target.inc_immediate(self.__memory_address_to_increment)
