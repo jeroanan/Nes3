@@ -60,3 +60,39 @@ class ArithmeticTests(unittest.TestCase):
                              self.get_overflow_flag(),
                              "Overflow flag not correct when executing {f}. Expected {x}. Got {a}."
                              .format(f=func_name, x=expected_result, a=self.get_overflow_flag()))
+
+    def assert_carry_flag(self, accumulator_value, operand_carry_flag_mappings):
+        for func_name, addition_func in self.arithmetic_funcs.items():
+            for operand, flag_value in operand_carry_flag_mappings.items():
+
+                self.set_accumulator(accumulator_value)
+
+                if func_name == "do_immediate_add":
+                    addition_func(operand=operand, accumulator_value=accumulator_value)
+                else:
+                    addition_func(operand=operand)
+
+                actual_flag_value = self.target.carry_flag
+
+                self.assertEqual(flag_value,
+                                 actual_flag_value,
+                                 "Expected carry flag value of {cf} when adding {av} and {op} using {fn}. Got {fv}."
+                                 .format(cf=flag_value,
+                                         av=accumulator_value,
+                                         op=operand,
+                                         fn=func_name,
+                                         fv=actual_flag_value))
+
+    def assert_uses_carry_flag(self, init_carry_flag_func, init_accumulator_func):
+         operand = 0x01
+         expected_result = 0x03
+
+         for func_name, subtraction_func in self.arithmetic_funcs.items():
+             init_accumulator_func()
+             init_carry_flag_func()
+             subtraction_func(operand)
+             self.assertEqual(expected_result,
+                              self.get_accumulator(),
+                              "Expected {ex} when executing {fn}. Got {ac}.".format(ex=expected_result,
+                                                                                    fn=func_name,
+                                                                                    ac=self.get_accumulator()))

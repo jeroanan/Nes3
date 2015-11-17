@@ -38,49 +38,17 @@ class TestSbc(at.ArithmeticTests):
             0x03: 0x01
         }
 
-        for func_name, subtraction_func in self.arithmetic_funcs.items():
-            for operand, flag_value in operand_carry_flag_mappings.items():
-
-                self.set_accumulator(accumulator_value)
-
-                if func_name == "do_immediate_subtraction":
-                    subtraction_func(operand=operand, accumulator_value=accumulator_value)
-                else:
-                    subtraction_func(operand=operand)
-
-                actual_flag_value = self.target.carry_flag
-
-                self.assertEqual(flag_value,
-                                 actual_flag_value,
-                                 """Expected carry flag value of {cf} when subtracting {op} from {av} using {fn}.
-                                 Got {fv}."""
-                                 .format(cf=flag_value,
-                                         av=accumulator_value,
-                                         op=operand,
-                                         fn=func_name,
-                                         fv=actual_flag_value))
+        self.assert_carry_flag(accumulator_value, operand_carry_flag_mappings)
 
     def test_sbc_subtracts_carry_flag(self):
-
-        for func_name, subtraction_func in self.arithmetic_funcs.items():
-            self.__init_accumulator()
-            operand = 0x01
-            self.clear_carry_flag()
-            expected_result = 0x03
-
-            subtraction_func(operand)
-            self.assertEqual(expected_result,
-                             self.get_accumulator(),
-                             "Expected {ex} when executing {fn}. Got {ac}.".format(ex=expected_result,
-                                                                                   fn=func_name,
-                                                                                   ac=self.get_accumulator()))
+        self.assert_uses_carry_flag(self.clear_carry_flag, self.__init_accumulator)
 
     def test_sbc_sets_overflow_flag(self):
         self.assert_overflow_flag(self.clear_overflow_flag, 0x80, 0x01, 0xFF)
 
     def test_sgc_clears_overflow_flag(self):
         self.assert_overflow_flag(self.set_overflow_flag, 0x01, 0x00, 0xFF)
-    
+
     def __do_immediate_subtraction(self, operand, accumulator_value=0x05):
         self.set_accumulator(accumulator_value)
         self.target.sbc_immediate(operand)

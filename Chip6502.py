@@ -318,7 +318,6 @@ class Chip6502(object):
         arithmetic_func = lambda: self.__get_accumulator() - operand - (1 - self.carry_flag)
 
         def carry_flag_func(sum_value):
-
             if sum_value >= 0:
                 self.carry_flag = 0x01
             else:
