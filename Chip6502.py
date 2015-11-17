@@ -323,7 +323,14 @@ class Chip6502(object):
         self.__set_accumulator(the_sum)
 
     def __subtract_from_accumulator(self, operand):
-        self.__set_accumulator(self.__get_accumulator() - operand)
+        the_sum = self.__get_accumulator() - operand - (1 - self.carry_flag)
+
+        if the_sum >= 0:
+            self.carry_flag = 0x01
+        else:
+            self.carry_flag = 0x00
+
+        self.__set_accumulator(the_sum)
 
 class RegisterOverflowException(Exception):
     pass

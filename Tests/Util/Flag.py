@@ -11,7 +11,7 @@ def set_carry_flag_func(chip):
 def clear_carry_flag_func(chip):
     def clear_carry_flag():
         chip.carry_flag = 0x0
-    return clear_carry_flag_func
+    return clear_carry_flag
 
 def set_overflow_flag_func(chip):
     def set_overflow_flag():

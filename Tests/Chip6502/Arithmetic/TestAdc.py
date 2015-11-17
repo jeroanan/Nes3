@@ -21,9 +21,9 @@ class TestAdc(at.ArithmeticTests):
     def test_adc_adds_numbers(self):
         expected_value = 0x03
 
-        for func_name, func in self.__addition_funcs.items():
+        for func_name, addition_func in self.__addition_funcs.items():
             self.__init_accumulator()
-            func(operand=0x02)
+            addition_func(operand=0x02)
             self.assertEqual(expected_value,
                              self.get_accumulator(),
                              "Expected value {ex} when executing {fn}. Got {ac}".format(ex=expected_value,
@@ -40,7 +40,13 @@ class TestAdc(at.ArithmeticTests):
 
         for func_name, addition_func in self.__addition_funcs.items():
             for operand, flag_value in operand_carry_flag_mappings.items():
-                self.__do_immediate_add(accumulator_value, operand)
+                self.set_accumulator(accumulator_value)
+
+                if func_name == "do_immediate_add":
+                    addition_func(operand=operand, accumulator_value=accumulator_value)
+                else:
+                    addition_func(operand=operand)
+
                 actual_flag_value = self.target.carry_flag
 
                 self.assertEqual(flag_value,
