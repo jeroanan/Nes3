@@ -52,25 +52,25 @@ class ArithmeticTests(unittest.TestCase):
 
     def assert_overflow_flag(self, overflow_flag_init_func, operand, expected_result, initial_accumulator_val):
 
-        for func_name, subtraction_func in self.arithmetic_funcs.items():
+        for func_name, arithmetic_func in self.arithmetic_funcs.items():
             self.set_accumulator(initial_accumulator_val)
             overflow_flag_init_func()
-            subtraction_func(operand)
+            arithmetic_func(operand)
             self.assertEqual(expected_result,
                              self.get_overflow_flag(),
                              "Overflow flag not correct when executing {f}. Expected {x}. Got {a}."
                              .format(f=func_name, x=expected_result, a=self.get_overflow_flag()))
 
     def assert_carry_flag(self, accumulator_value, operand_carry_flag_mappings):
-        for func_name, addition_func in self.arithmetic_funcs.items():
+        for func_name, arithmetic_func in self.arithmetic_funcs.items():
             for operand, flag_value in operand_carry_flag_mappings.items():
 
                 self.set_accumulator(accumulator_value)
 
                 if func_name == "do_immediate_add":
-                    addition_func(operand=operand, accumulator_value=accumulator_value)
+                    arithmetic_func(operand=operand, accumulator_value=accumulator_value)
                 else:
-                    addition_func(operand=operand)
+                    arithmetic_func(operand=operand)
 
                 actual_flag_value = self.target.carry_flag
 
@@ -87,10 +87,10 @@ class ArithmeticTests(unittest.TestCase):
          operand = 0x01
          expected_result = 0x03
 
-         for func_name, subtraction_func in self.arithmetic_funcs.items():
+         for func_name, arithmetic_func in self.arithmetic_funcs.items():
              init_accumulator_func()
              init_carry_flag_func()
-             subtraction_func(operand)
+             arithmetic_func(operand)
              self.assertEqual(expected_result,
                               self.get_accumulator(),
                               "Expected {ex} when executing {fn}. Got {ac}.".format(ex=expected_result,
@@ -100,10 +100,10 @@ class ArithmeticTests(unittest.TestCase):
     def assert_performs_arithmetic(self, init_carry_flag_func, init_accumulator_func):
         expected_value = 0x03
 
-        for func_name, addition_func in self.arithmetic_funcs.items():
+        for func_name, arithmetic_func in self.arithmetic_funcs.items():
             init_carry_flag_func()
             init_accumulator_func()
-            addition_func(operand=0x02)
+            arithmetic_func(operand=0x02)
             self.assertEqual(expected_value,
                              self.get_accumulator(),
                              "Expected value {ex} when executing {fn}. Got {ac}".format(ex=expected_value,
