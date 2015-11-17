@@ -394,4 +394,4 @@ class TestChip6502(unittest.TestCase):
             self.assertEqual(expected_value,
                             self.__target.carry_flag,
                             """Carry flag not expected value of {ex} from starting state of {state}.
-                            Instead it was {val}""".format(state=v, ex=expected_value, val=self.__target.carry_flag))
+                            Instead it was {val}""".format(state=v, ex=expected_value, val=self.__target.carry_flag))   

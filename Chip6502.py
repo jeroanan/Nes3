@@ -62,6 +62,8 @@ class Chip6502(object):
         self.sbc_indirect_indexed = lambda addr: self.__subtract_from_accumulator(
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
+        self.inc_immediate = lambda address: self.__increment_memory_value(address)
+
     @property
     def accumulator(self):
         """
@@ -340,6 +342,12 @@ class Chip6502(object):
             self.overflow_flag = 0x00
 
         self.__set_accumulator(the_sum)
+
+
+
+    def __increment_memory_value(self, address):
+        address_value = self.__ram.get_address(address)
+        self.__ram.set_address(address, address_value + 0x01)
 
 class RegisterOverflowException(Exception):
     pass

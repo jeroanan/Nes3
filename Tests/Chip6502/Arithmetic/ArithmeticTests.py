@@ -1,17 +1,15 @@
 import unittest
 
+import Tests.Chip6502.BaseTest as base_test
 import Chip6502 as chip
 import NesMemory as memory
 import Tests.Util.Register as register
 import Tests.Util.Flag as flag
 
-class ArithmeticTests(unittest.TestCase):
+class ArithmeticTests(base_test.BaseTest):
     def setUp(self):
-
+        super().setUp()
         self.arithmetic_funcs = {'': ''}
-
-        self.memory = memory.NesMemory(0xFFFF)
-        self.target = chip.Chip6502(self.memory)
 
         def init_register_functions():
             self.get_accumulator = register.get_accumulator_func(self.target)
