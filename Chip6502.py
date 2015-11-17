@@ -163,7 +163,7 @@ class Chip6502(object):
                 self.zero_flag = 0x00
 
         def set_negative_flag():
-            if val & 255 == 255:
+            if val & 0xFF == 0xFF:
                 self.negative_flag = 0x01
             else:
                 self.negative_flag = 0x00
@@ -304,13 +304,33 @@ class Chip6502(object):
         return get_register_func
 
     def __add_to_accumulator(self, operand):
-        the_sum = self.__accumulator + operand + self.carry_flag
+        arithmetic_func = lambda: self.__accumulator + operand + self.carry_flag
 
-        if the_sum > 0xFF:
-            the_sum = 0xFF
-            self.carry_flag = 0x01
-        else:
-            self.carry_flag = 0x00
+        def carry_flag_func(sum_value):
+            if sum_value > 0xFF:
+                self.carry_flag = 0x01
+            else:
+                self.carry_flag = 0x00
+
+        self.__perform_accumulator_arithmetic(arithmetic_func, carry_flag_func)
+
+    def __subtract_from_accumulator(self, operand):
+        arithmetic_func = lambda: self.__get_accumulator() - operand - (1 - self.carry_flag)
+
+        def carry_flag_func(sum_value):
+
+            if sum_value >= 0:
+                self.carry_flag = 0x01
+            else:
+                self.carry_flag = 0x0
+
+        self.__perform_accumulator_arithmetic(arithmetic_func, carry_flag_func)
+
+    def __perform_accumulator_arithmetic(self, arithmetic_func, carry_flag_func):
+        the_sum = arithmetic_func()
+
+        carry_flag_func(the_sum)
+        the_sum = min(0xFF, the_sum)
 
         accumulator_seventh_bit = 0x80 & self.__get_accumulator()
         result_seventh_bit = 0x80 & the_sum
@@ -319,16 +339,6 @@ class Chip6502(object):
             self.overflow_flag = 0x01
         else:
             self.overflow_flag = 0x00
-
-        self.__set_accumulator(the_sum)
-
-    def __subtract_from_accumulator(self, operand):
-        the_sum = self.__get_accumulator() - operand - (1 - self.carry_flag)
-
-        if the_sum >= 0:
-            self.carry_flag = 0x01
-        else:
-            self.carry_flag = 0x00
 
         self.__set_accumulator(the_sum)
 

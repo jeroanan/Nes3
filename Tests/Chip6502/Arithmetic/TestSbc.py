@@ -76,7 +76,22 @@ class TestSbc(at.ArithmeticTests):
                                                                                    ac=self.get_accumulator()))
 
     def test_sbc_sets_overflow_flag(self):
-        pass
+        self.__assert_overflow_flag(self.clear_overflow_flag, 0x80, 0x01)
+
+    def test_sgc_clears_overflow_flag(self):
+        self.__assert_overflow_flag(self.set_overflow_flag, 0x01, 0x00)
+
+    def __assert_overflow_flag(self, overflow_flag_init_func, operand, expected_result):
+        initial_accumulator_val = 0xFF
+
+        for func_name, subtraction_func in self.__subtraction_funcs.items():
+            self.set_accumulator(initial_accumulator_val)
+            overflow_flag_init_func()
+            subtraction_func(operand)
+            self.assertEqual(expected_result,
+                             self.get_overflow_flag(),
+                             "Overflow flag not correct when executing {f}. Expected {x}. Got {a}."
+                             .format(f=func_name, x=expected_result, a=self.get_overflow_flag()))
 
     def __do_immediate_subtraction(self, operand, accumulator_value=0x05):
         self.set_accumulator(accumulator_value)
