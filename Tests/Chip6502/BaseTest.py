@@ -23,6 +23,8 @@ class BaseTest(unittest.TestCase):
             self.set_overflow_flag = flag.set_overflow_flag_func(self.target)
             self.clear_overflow_flag = flag.clear_overflow_flag_func(self.target)
             self.get_overflow_flag = flag.get_overflow_flag_func(self.target)
+            self.clear_zero_flag = flag.get_clear_zero_flag_func(self.target)
+            self.get_zero_flag = flag.get_zero_flag_func(self.target)
 
         self.memory = memory.NesMemory(0xFFFF)
         self.target = chip.Chip6502(self.memory)

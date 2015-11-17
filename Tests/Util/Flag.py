@@ -27,7 +27,7 @@ def get_negative_flag_func(chip):
     def get_negative_flag():
         return chip.negative_flag
     return get_negative_flag
-    
+
 def clear_overflow_flag_func(chip):
     def clear_overflow_flag():
         chip.overflow_flag = 0x0
@@ -37,3 +37,13 @@ def get_overflow_flag_func(chip):
     def get_overflow_flag():
         return chip.overflow_flag
     return get_overflow_flag
+
+def get_clear_zero_flag_func(chip):
+    def clear_zero_flag():
+        chip.zero_flag = 0x0
+    return clear_zero_flag
+
+def get_zero_flag_func(chip):
+    def get_zero_flag():
+        return chip.zero_flag
+    return get_zero_flag

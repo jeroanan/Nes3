@@ -69,6 +69,13 @@ class Chip6502(object):
         self.inc_indirect_indexed = lambda addr: self.__increment_memory_value(
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
+        self.dec_immediate = lambda addr: self.__decrement_memory_value(addr)
+        self.dec_absolute = lambda addr: self.__decrement_memory_value(self.__ram.get_address(addr))
+        self.dec_indexed_indirect = lambda addr: self.__decrement_memory_value(
+            self.__ram.get_address(self.__ram.get_indexed_indirect_memory_address(addr, self.__get_x_register())))
+        self.dec_indirect_indexed = lambda addr: self.__decrement_memory_value(
+            self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
+
     @property
     def accumulator(self):
         """
@@ -362,6 +369,28 @@ class Chip6502(object):
         address_value = self.__ram.get_address(address)
         self.__ram.set_address(address, address_value + 0x01)
         set_negative_flag(self.__ram.get_address(address))
+
+    def dec_absolute_indexed(self, address, register):
+        get_register_func = self.__get_register_func_from_register_letter(register)
+        self.__decrement_memory_value(self.__ram.get_address(address + get_register_func()))
+
+    def __decrement_memory_value(self, address):
+        def set_negative_flag(val):
+            if val & 0x80 == 0x80:
+                self.negative_flag = 0x01
+            else:
+                self.negative_flag = 0x00
+
+        def set_zero_flag(val):
+            if val == 0x0:
+                self.zero_flag = 0x01
+            else:
+                self.zero_flag = 0x00
+
+        address_value = self.__ram.get_address(address)
+        self.__ram.set_address(address, address_value - 0x01)
+        set_negative_flag(self.__ram.get_address(address))
+        set_zero_flag(self.__ram.get_address(address))
 
 class RegisterOverflowException(Exception):
     pass
