@@ -40,6 +40,7 @@ class TestAdc(at.ArithmeticTests):
 
         for func_name, addition_func in self.arithmetic_funcs.items():
             for operand, flag_value in operand_carry_flag_mappings.items():
+                
                 self.set_accumulator(accumulator_value)
 
                 if func_name == "do_immediate_add":
