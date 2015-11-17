@@ -9,7 +9,7 @@ class TestSbc(at.ArithmeticTests):
         self.__init_accumulator = lambda: self.set_accumulator(0x05)
         self.__init_accumulator()
 
-        self.__subtraction_funcs = {
+        self.arithmetic_funcs = {
             "do_immediate_subtraction": self.__do_immediate_subtraction,
             "do_absolute_subtraction": self.__do_absolute_subtraction,
             "do_absolute_indexed_subtraction": self.__do_absolute_indexed_subtraction,
@@ -18,7 +18,7 @@ class TestSbc(at.ArithmeticTests):
         }
 
     def test_sbc_subtracts_numbers(self):
-        for func_name, subtraction_func in self.__subtraction_funcs.items():
+        for func_name, subtraction_func in self.arithmetic_funcs.items():
             self.set_carry_flag()
             self.__init_accumulator()
             subtraction_func(operand=0x02)
@@ -38,7 +38,7 @@ class TestSbc(at.ArithmeticTests):
             0x03: 0x01
         }
 
-        for func_name, subtraction_func in self.__subtraction_funcs.items():
+        for func_name, subtraction_func in self.arithmetic_funcs.items():
             for operand, flag_value in operand_carry_flag_mappings.items():
 
                 self.set_accumulator(accumulator_value)
@@ -62,7 +62,7 @@ class TestSbc(at.ArithmeticTests):
 
     def test_sbc_subtracts_carry_flag(self):
 
-        for func_name, subtraction_func in self.__subtraction_funcs.items():
+        for func_name, subtraction_func in self.arithmetic_funcs.items():
             self.__init_accumulator()
             operand = 0x01
             self.clear_carry_flag()
@@ -76,23 +76,11 @@ class TestSbc(at.ArithmeticTests):
                                                                                    ac=self.get_accumulator()))
 
     def test_sbc_sets_overflow_flag(self):
-        self.__assert_overflow_flag(self.clear_overflow_flag, 0x80, 0x01)
+        self.assert_overflow_flag(self.clear_overflow_flag, 0x80, 0x01, 0xFF)
 
     def test_sgc_clears_overflow_flag(self):
-        self.__assert_overflow_flag(self.set_overflow_flag, 0x01, 0x00)
-
-    def __assert_overflow_flag(self, overflow_flag_init_func, operand, expected_result):
-        initial_accumulator_val = 0xFF
-
-        for func_name, subtraction_func in self.__subtraction_funcs.items():
-            self.set_accumulator(initial_accumulator_val)
-            overflow_flag_init_func()
-            subtraction_func(operand)
-            self.assertEqual(expected_result,
-                             self.get_overflow_flag(),
-                             "Overflow flag not correct when executing {f}. Expected {x}. Got {a}."
-                             .format(f=func_name, x=expected_result, a=self.get_overflow_flag()))
-
+        self.assert_overflow_flag(self.set_overflow_flag, 0x01, 0x00, 0xFF)
+    
     def __do_immediate_subtraction(self, operand, accumulator_value=0x05):
         self.set_accumulator(accumulator_value)
         self.target.sbc_immediate(operand)

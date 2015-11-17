@@ -7,6 +7,9 @@ import Tests.Util.Flag as flag
 
 class ArithmeticTests(unittest.TestCase):
     def setUp(self):
+
+        self.arithmetic_funcs = {'': ''}
+
         self.memory = memory.NesMemory(0xFFFF)
         self.target = chip.Chip6502(self.memory)
 
@@ -46,3 +49,14 @@ class ArithmeticTests(unittest.TestCase):
         self.memory.set_address(0x03, 0x08)
         self.memory.set_address(0x04, 0x0F)
         self.memory.set_address(0x0F0A, operand)
+
+    def assert_overflow_flag(self, overflow_flag_init_func, operand, expected_result, initial_accumulator_val):
+
+        for func_name, subtraction_func in self.arithmetic_funcs.items():
+            self.set_accumulator(initial_accumulator_val)
+            overflow_flag_init_func()
+            subtraction_func(operand)
+            self.assertEqual(expected_result,
+                             self.get_overflow_flag(),
+                             "Overflow flag not correct when executing {f}. Expected {x}. Got {a}."
+                             .format(f=func_name, x=expected_result, a=self.get_overflow_flag()))
