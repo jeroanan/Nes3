@@ -12,7 +12,9 @@ class BaseTest(unittest.TestCase):
         def init_register_functions():
             self.get_accumulator = register.get_accumulator_func(self.target)
             self.set_accumulator = register.set_accumulator_func(self.target)
+            self.get_x_register = register.get_x_register_func(self.target)
             self.set_x_register = register.set_x_register_func(self.target)
+            self.get_y_register = register.get_y_register_func(self.target)
             self.set_y_register = register.set_y_register_func(self.target)
 
         def init_flag_functions():

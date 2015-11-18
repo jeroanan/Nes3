@@ -76,6 +76,11 @@ class Chip6502(object):
         self.dec_indirect_indexed = lambda addr: self.__decrement_memory_value(
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
+        self.inc_x_register = lambda: self.__set_x_register(self.__get_x_register() + 0x01)
+        self.dec_x_register = lambda: self.__set_x_register(self.__get_x_register() - 0x01)
+        self.inc_y_register =  lambda: self.__set_y_register(self.__get_y_register() + 0x01)
+        self.dec_y_register = lambda: self.__set_y_register(self.__get_y_register() - 0x01)
+
     @property
     def accumulator(self):
         """
