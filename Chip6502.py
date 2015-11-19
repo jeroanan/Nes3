@@ -76,11 +76,6 @@ class Chip6502(object):
         self.dec_indirect_indexed = lambda addr: self.__decrement_memory_value(
             self.__ram.get_address(self.__ram.get_indirect_indexed_memory_address(addr, self.__get_y_register())))
 
-        self.inc_x_register = lambda: self.__set_x_register(self.__get_x_register() + 0x01)
-        self.dec_x_register = lambda: self.__set_x_register(self.__get_x_register() - 0x01)
-        self.inc_y_register =  lambda: self.__set_y_register(self.__get_y_register() + 0x01)
-        self.dec_y_register = lambda: self.__set_y_register(self.__get_y_register() - 0x01)
-
     @property
     def accumulator(self):
         """
@@ -364,38 +359,49 @@ class Chip6502(object):
         get_register_func = self.__get_register_func_from_register_letter(register)
         self.__increment_memory_value(self.__ram.get_address(address + get_register_func()))
 
-    def __increment_memory_value(self, address):
-        def set_negative_flag(val):
-            if val & 0x80 == 0x80:
-                self.negative_flag = 0x01
-            else:
-                self.negative_flag = 0x00
-
-        address_value = self.__ram.get_address(address)
-        self.__ram.set_address(address, address_value + 0x01)
-        set_negative_flag(self.__ram.get_address(address))
-
     def dec_absolute_indexed(self, address, register):
         get_register_func = self.__get_register_func_from_register_letter(register)
         self.__decrement_memory_value(self.__ram.get_address(address + get_register_func()))
 
-    def __decrement_memory_value(self, address):
-        def set_negative_flag(val):
-            if val & 0x80 == 0x80:
-                self.negative_flag = 0x01
-            else:
-                self.negative_flag = 0x00
-
-        def set_zero_flag(val):
-            if val == 0x0:
-                self.zero_flag = 0x01
-            else:
-                self.zero_flag = 0x00
-
+    def __increment_memory_value(self, address):
         address_value = self.__ram.get_address(address)
-        self.__ram.set_address(address, address_value - 0x01)
-        set_negative_flag(self.__ram.get_address(address))
-        set_zero_flag(self.__ram.get_address(address))
+        f = lambda: self.__ram.set_address(address, address_value + 0x01)
+        self.__increment_or_decrement_memory_value(address, f)
+
+    def __decrement_memory_value(self, address):
+        address_value = self.__ram.get_address(address)
+        f = lambda: self.__ram.set_address(address, address_value - 0x01)
+        self.__increment_or_decrement_memory_value(address, f)
+
+    def __increment_or_decrement_memory_value(self, address, inc_dec_func):
+        address_value = self.__ram.get_address(address)
+        inc_dec_func()
+        self.__set_negative_flag(self.__ram.get_address(address))
+        self.__set_zero_flag(self.__ram.get_address(address))
+
+    def __set_zero_flag(self, val):
+        if val == 0x0:
+            self.zero_flag = 0x01
+        else:
+            self.zero_flag = 0x00
+
+    def __set_negative_flag(self, val):
+        if val & 0x80 == 0x80:
+            self.negative_flag = 0x01
+        else:
+            self.negative_flag = 0x00
+
+    def inc_x_register(self):
+        self.__set_x_register(self.__get_x_register() + 0x01)
+
+    def dec_x_register(self):
+        self.__set_x_register(self.__get_x_register() - 0x01)
+
+    def inc_y_register(self):
+        self.__set_y_register(self.__get_y_register() + 0x01)
+
+    def dec_y_register(self):
+        self.__set_y_register(self.__get_y_register() - 0x01)
 
 class RegisterOverflowException(Exception):
     pass

@@ -11,13 +11,23 @@ class TestIncDecRegisters(base_test.BaseTest):
         self.__funcs = {'inc_x_register': (self.target.inc_x_register, 0x03),
                         'dec_x_register': (self.target.dec_x_register, 0x01)}
 
-        self.__assert_inc_dec_register(self.set_x_register, self.get_x_register)        
+        self.__assert_inc_dec_register(self.set_x_register, self.get_x_register)
 
     def test_inc_dec_y_register(self):
         self.__funcs = {'inc_y_register': (self.target.inc_y_register, 0x03),
                         'dec_y_register': (self.target.dec_y_register, 0x01)}
 
         self.__assert_inc_dec_register(self.set_y_register, self.get_y_register)
+
+    def test_dec_registers_sets_zero_flag(self):
+        funcs = {'dec_x_register': (self.target.dec_x_register, self.set_x_register),
+                 'dec_y_register': (self.target.dec_y_register, self.set_y_register)}
+
+        for name, func_with_initializer in funcs.items():
+            inc_dec_register_func, initializer = func_with_initializer
+            initializer(0x1)
+            inc_dec_register_func()
+            self.assertEqual(0x1, self.get_zero_flag())
 
     def __assert_inc_dec_register(self, set_register_func, get_register_func):
          for func_name, func_with_expected_result in self.__funcs.items():
